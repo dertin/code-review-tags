@@ -1,0 +1,129 @@
+/* ---------- Color tokens (light default) ---------- */
+:root {
+  --cch-surface: #ffffff;
+  --cch-border:  #DFE1E6;
+  --cch-text:    #172B4D;
+  --cch-muted:   #6B778C;
+
+  --cch-select-bg:    #FAFBFC;
+  --cch-select-bord:  #DFE1E6;
+
+  --cch-chip-bg:      #F4F5F7;
+  --cch-chip-bord:    #C1C7D0;
+  --cch-chip-text:    #172B4D;
+
+  --cch-chip-active-bg:   #0052CC;  /* Atlassian blue */
+  --cch-chip-active-bord: #0052CC;
+  --cch-chip-active-text: #ffffff;
+
+  --cch-shadow: 0 6px 18px rgba(9,30,66,0.08);
+  --cch-focus:  0 0 0 2px rgba(29,122,252,.4); /* blue focus ring */
+}
+
+/* ---------- Dark mode via Bitbucket attribute ---------- */
+html[data-color-mode="dark"] {
+  --cch-surface: #1D2125;   /* Atlassian dark surface */
+  --cch-border:  #2C333A;
+  --cch-text:    #B6C2CF;
+  --cch-muted:   #9FADBC;
+
+  --cch-select-bg:    #22272B;
+  --cch-select-bord:  #3D4751;
+
+  --cch-chip-bg:      #2C333A;
+  --cch-chip-bord:    #3D4751;
+  --cch-chip-text:    #B6C2CF;
+
+  --cch-chip-active-bg:   #1D7AFC;
+  --cch-chip-active-bord: #1D7AFC;
+  --cch-chip-active-text: #ffffff;
+
+  --cch-shadow: 0 6px 18px rgba(0,0,0,0.45);
+  --cch-focus:  0 0 0 2px rgba(29,122,252,.55);
+}
+
+/* ---------- Optional fallback for environments w/o the attribute ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not(html[data-color-mode]) {
+    --cch-surface: #1D2125;
+    --cch-border:  #2C333A;
+    --cch-text:    #B6C2CF;
+    --cch-muted:   #9FADBC;
+
+    --cch-select-bg:    #22272B;
+    --cch-select-bord:  #3D4751;
+
+    --cch-chip-bg:      #2C333A;
+    --cch-chip-bord:    #3D4751;
+    --cch-chip-text:    #B6C2CF;
+
+    --cch-chip-active-bg:   #1D7AFC;
+    --cch-chip-active-bord: #1D7AFC;
+    --cch-chip-active-text: #ffffff;
+
+    --cch-shadow: 0 6px 18px rgba(0,0,0,0.45);
+    --cch-focus:  0 0 0 2px rgba(29,122,252,.55);
+  }
+}
+
+/* ---------- Panel ---------- */
+.cch-panel{
+  font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 12px;
+  align-items: center;
+  background: var(--cch-surface);
+  color: var(--cch-text);
+  border: 1px solid var(--cch-border);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  box-shadow: var(--cch-shadow);
+}
+
+/* ---------- Select ---------- */
+.cch-select{
+  width: 100%;
+  border: 1px solid var(--cch-select-bord);
+  background: var(--cch-select-bg);
+  color: var(--cch-text);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  outline: none;
+}
+.cch-select:focus-visible { box-shadow: var(--cch-focus); }
+
+/* ---------- Chips ---------- */
+.cch-chips{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cch-chip{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--cch-chip-bg);
+  border: 1px solid var(--cch-chip-bord);
+  color: var(--cch-chip-text);
+  padding: 6px 12px;
+  border-radius: 18px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 12px;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.cch-chip input{ display:none; }
+.cch-chip:hover { filter: brightness(1.05); }
+.cch-chip.active{
+  background: var(--cch-chip-active-bg);
+  border-color: var(--cch-chip-active-bord);
+  color: var(--cch-chip-active-text);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px){
+  .cch-panel{ grid-template-columns: 1fr; }
+}
