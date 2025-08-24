@@ -1,46 +1,117 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <title>Settings - Conventional Comments Helper</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; padding: 16px; max-width: 700px; margin: 20px auto; color: #172B4D; }
-    h2 { border-bottom: 1px solid #DFE1E6; padding-bottom: 8px; }
-    .setting { margin-bottom: 20px; }
-    label { display: block; font-weight: 600; margin-bottom: 6px; }
-    textarea { width: 100%; min-height: 92px; border: 1px solid #DFE1E6; border-radius: 8px; padding: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background:#FAFBFC; }
-    select { padding: 8px; border-radius: 8px; border: 1px solid #DFE1E6; background:#FAFBFC; }
-    .hint { font-size: 12px; color: #6B778C; margin-top: 4px; }
-    button { padding: 10px 16px; border: none; border-radius: 8px; background-color: #0052CC; color: white; font-weight: 600; cursor: pointer; }
-    button.secondary { background-color: #6B778C; }
-    #status { margin-left: 12px; color: #0065FF; font-weight: 600; }
-  </style>
-</head>
-<body>
-  <h2>Conventional Comments Settings</h2>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Settings - Conventional Comments Helper</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        padding: 16px;
+        max-width: 700px;
+        margin: 20px auto;
+        color: #172b4d;
+      }
+      h2 {
+        border-bottom: 1px solid #dfe1e6;
+        padding-bottom: 8px;
+      }
+      .setting {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      textarea {
+        width: 100%;
+        min-height: 92px;
+        border: 1px solid #dfe1e6;
+        border-radius: 8px;
+        padding: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        background: #fafbfc;
+      }
+      select {
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid #dfe1e6;
+        background: #fafbfc;
+      }
+      .hint {
+        font-size: 12px;
+        color: #6b778c;
+        margin-top: 4px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      button {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 8px;
+        background-color: #0052cc;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button.secondary {
+        background-color: #6b778c;
+      }
+      #status {
+        margin-left: 12px;
+        color: #0065ff;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Conventional Comments Settings</h2>
 
-  <div class="setting">
-    <label for="custom-labels">Labels</label>
-    <textarea id="custom-labels"></textarea>
-    <p class="hint">Enter your desired labels, separated by commas. Example: praise, nitpick, suggestion</p>
-  </div>
+    <div class="setting">
+      <label for="custom-labels">Labels</label>
+      <textarea id="custom-labels"></textarea>
+      <p class="hint">
+        Enter your desired labels, separated by commas. Example: praise,
+        nitpick, suggestion
+      </p>
+    </div>
 
-  <div class="setting">
-    <label for="custom-decorations">Decorations</label>
-    <textarea id="custom-decorations"></textarea>
-    <p class="hint">Enter your desired decorations, separated by commas. Example: non-blocking, blocking, if-minor</p>
-  </div>
+    <div class="setting">
+      <label for="custom-decorations">Decorations</label>
+      <textarea id="custom-decorations"></textarea>
+      <p class="hint">
+        Enter your desired decorations, separated by commas. Example:
+        non-blocking, blocking, if-minor
+      </p>
+    </div>
 
-  <div class="setting">
-    <label for="default-label">Default Label on Load</label>
-    <select id="default-label"></select>
-    <p class="hint">This list will populate from the Labels you define above after saving.</p>
-  </div>
+    <div class="setting">
+      <label for="default-label">Default Label on Load</label>
+      <select id="default-label"></select>
+      <p class="hint">
+        This list will populate from the Labels you define above after saving.
+      </p>
+    </div>
 
-  <button id="save-btn">Save and Reload Add-on</button>
-  <button id="restore-btn" class="secondary">Restore Defaults</button>
-  <span id="status"></span>
+    <div class="setting">
+      <label class="row" for="show-on-replies">
+        <input type="checkbox" id="show-on-replies" />
+        Show helper in replies
+      </label>
+      <p class="hint">
+        If unchecked, the helper UI is hidden when replying inside an existing
+        thread.
+      </p>
+    </div>
 
-  <script src="options.js"></script>
-</body>
+    <button id="save-btn">Save and Reload Add-on</button>
+    <button id="restore-btn" class="secondary">Restore Defaults</button>
+    <span id="status"></span>
+
+    <script src="options.js"></script>
+  </body>
 </html>
