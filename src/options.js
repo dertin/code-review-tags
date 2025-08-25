@@ -2,7 +2,7 @@ const el = {
   labels: null,
   decorations: null,
   defaultLabel: null,
-  showReplies: null,
+  repliesStartVisible: null,
   saveBtn: null,
   restoreBtn: null,
   status: null,
@@ -25,7 +25,7 @@ const DEFAULTS = {
   ],
   decorations: ["non-blocking", "blocking", "if-minor"],
   defaultLabel: "suggestion",
-  showOnReplies: false,
+  repliesStartVisible: false,
 };
 
 const api = globalThis.browser || globalThis.chrome;
@@ -52,10 +52,10 @@ async function restoreOptions() {
     items.labels || DEFAULTS.labels,
     items.defaultLabel || DEFAULTS.defaultLabel
   );
-  el.showReplies.checked =
-    typeof items.showOnReplies === "boolean"
-      ? items.showOnReplies
-      : DEFAULTS.showOnReplies;
+  el.repliesStartVisible.checked =
+    typeof items.repliesStartVisible === "boolean"
+      ? items.repliesStartVisible
+      : DEFAULTS.repliesStartVisible;
 }
 
 async function saveOptions() {
@@ -74,7 +74,7 @@ async function saveOptions() {
       ? customDecorations
       : DEFAULTS.decorations,
     defaultLabel: el.defaultLabel.value || DEFAULTS.defaultLabel,
-    showOnReplies: !!el.showReplies.checked,
+    repliesStartVisible: !!el.repliesStartVisible.checked,
   });
 
   el.status.textContent = "Saved! Reloading add-on to apply changes...";
@@ -88,14 +88,14 @@ function restoreDefaultsUI() {
   el.labels.value = DEFAULTS.labels.join(", ");
   el.decorations.value = DEFAULTS.decorations.join(", ");
   populateDefaultLabelDropdown(DEFAULTS.labels, DEFAULTS.defaultLabel);
-  el.showReplies.checked = DEFAULTS.showOnReplies;
+  el.repliesStartVisible.checked = DEFAULTS.repliesStartVisible;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   el.labels = document.getElementById("custom-labels");
   el.decorations = document.getElementById("custom-decorations");
   el.defaultLabel = document.getElementById("default-label");
-  el.showReplies = document.getElementById("show-on-replies");
+  el.repliesStartVisible = document.getElementById("replies-start-visible");
   el.saveBtn = document.getElementById("save-btn");
   el.restoreBtn = document.getElementById("restore-btn");
   el.status = document.getElementById("status");

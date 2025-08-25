@@ -1,7 +1,7 @@
 let LABELS = [];
 let DECORATIONS = [];
 let DEFAULT_LABEL = "suggestion";
-let SHOW_ON_REPLIES = false;
+let REPLIES_START_VISIBLE = false;
 
 const DEFAULTS = {
   labels: [
@@ -20,7 +20,7 @@ const DEFAULTS = {
   ],
   decorations: ["non-blocking", "blocking", "if-minor"],
   defaultLabel: "suggestion",
-  showOnReplies: false,
+  repliesStartVisible: false,
 };
 
 const api = globalThis.browser || globalThis.chrome;
@@ -62,10 +62,10 @@ async function loadSettings() {
   LABELS = items.labels || DEFAULTS.labels;
   DECORATIONS = items.decorations || DEFAULTS.decorations;
   DEFAULT_LABEL = items.defaultLabel || DEFAULTS.defaultLabel;
-  SHOW_ON_REPLIES =
-    typeof items.showOnReplies === "boolean"
-      ? items.showOnReplies
-      : DEFAULTS.showOnReplies;
+  REPLIES_START_VISIBLE =
+    typeof items.repliesStartVisible === "boolean"
+      ? items.repliesStartVisible
+      : DEFAULTS.repliesStartVisible;
   return { ...DEFAULTS, ...items };
 }
 
@@ -76,9 +76,41 @@ const EDITOR_CONTAINER_SELECTOR =
 const PROSE_SELECTOR = "#ak-editor-textarea.ProseMirror, div.ProseMirror";
 
 // --- Observe editor appearance and inject once per editor container ---
+let _rafScheduled = false;
 function startObserver() {
-  const mo = new MutationObserver(() => injectIfNeeded());
-  mo.observe(document.documentElement, { childList: true, subtree: true });
+  const mo = new MutationObserver((records) => {
+    // Filter out ProseMirror keystroke mutations; schedule only when relevant nodes appear.
+    let relevant = false;
+    for (const r of records) {
+      if (relevant) break;
+      for (const n of r.addedNodes) {
+        if (n.nodeType !== 1) continue; // elements only
+        const el = /** @type {Element} */ (n);
+        if (
+          el.matches?.(EDITOR_CONTAINER_SELECTOR) ||
+          el.matches?.('div[data-vc="toolbar-inner"]') ||
+          el.querySelector?.(EDITOR_CONTAINER_SELECTOR) ||
+          el.querySelector?.('div[data-vc="toolbar-inner"]')
+        ) {
+          relevant = true;
+          break;
+        }
+      }
+    }
+    if (!relevant) return;
+
+    if (_rafScheduled) return;
+    _rafScheduled = true;
+    requestAnimationFrame(() => {
+      _rafScheduled = false;
+      injectIfNeeded();
+    });
+  });
+
+  mo.observe(document.body || document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
   injectIfNeeded();
 }
 
@@ -90,6 +122,7 @@ function injectIfNeeded() {
       container;
 
     const reply = isReplyEditor(editorEl);
+    const startVisible = reply ? REPLIES_START_VISIBLE : true;
 
     if (DEBUG)
       console.debug("[cch] injectIfNeeded -> reply?", reply, {
@@ -97,18 +130,23 @@ function injectIfNeeded() {
         editorEl,
       });
 
-    // If it's a reply and user chose to hide on replies, ensure panel is removed.
-    if (!SHOW_ON_REPLIES && reply) {
-      const existing = container.querySelector(":scope > .cch-panel");
-      if (existing) existing.remove();
-      return;
+    // Avoid duplicates for panel
+    let panel = container.querySelector(':scope > [data-cch-panel="true"]');
+
+    if (!panel) {
+      panel = buildUI(container, editorEl, startVisible);
+      setPanelVisible(panel, startVisible);
     }
 
-    // Avoid duplicates
-    if (container.querySelector(":scope > .cch-panel")) return;
-
-    buildUI(container, editorEl);
+    // Ensure toolbar toggle exists and is bound to this panel
+    ensureToolbarToggle(container, panel);
   });
+}
+
+function setPanelVisible(panel, visible) {
+  // Use both hidden + inline display for robustness against host CSS overrides.
+  panel.hidden = !visible;
+  panel.style.display = visible ? "" : "none";
 }
 
 /** Small helper */
@@ -227,9 +265,10 @@ function isReplyEditor(editorEl) {
 }
 
 // --- UI: compact panel with a label dropdown + decoration chips ---
-function buildUI(container, editorEl) {
+function buildUI(container, editorEl, startVisible) {
   const panel = document.createElement("div");
   panel.className = "cch-panel";
+  panel.setAttribute("data-cch-panel", "true");
 
   const labelSelect = createLabeledSelect(
     ["", ...LABELS],
@@ -255,22 +294,30 @@ function buildUI(container, editorEl) {
     // Edit mode: neutral UI so we don't overwrite on load
     labelSelect.value = ""; // none
   } else {
-    // New comment: prefill with defaults and apply once
-    labelSelect.value = DEFAULT_LABEL || "";
-    applyPrefixFromUI(editorEl, labelSelect, chips);
-    baseLabel = labelSelect.value;
-    baseDecs = [];
+    // New comment:
+    if (startVisible) {
+      // Only auto-apply defaults when the panel starts visible (root editor or setting enabled).
+      labelSelect.value = DEFAULT_LABEL || "";
+      applyPrefixFromUI(editorEl, labelSelect, chips);
+      baseLabel = labelSelect.value;
+      baseDecs = [];
+    } else {
+      // Panel starts hidden on replies: do not touch the editor content.
+      labelSelect.value = "";
+    }
   }
 
   // Events
   labelSelect.addEventListener("change", () => {
     labelTouched = true;
+    _suppressCaretOnce = true;
     applyPrefixSmart(editorEl, labelSelect, chips, {
       baseLabel,
       baseDecs,
       labelTouched,
       chipsTouched,
     });
+    _suppressCaretOnce = false;
   });
 
   chips.querySelectorAll("input").forEach((cb) => {
@@ -279,14 +326,95 @@ function buildUI(container, editorEl) {
         .closest(".cch-chip")
         ?.classList.toggle("active", e.target.checked);
       chipsTouched = true;
+      _suppressCaretOnce = true;
       applyPrefixSmart(editorEl, labelSelect, chips, {
         baseLabel,
         baseDecs,
         labelTouched,
         chipsTouched,
       });
+      _suppressCaretOnce = false;
     });
   });
+
+  return panel;
+}
+
+// Find the toolbar container for this editor with minimal DOM walking.
+function findToolbar(container) {
+  // First, try within the container (usual case)
+  let inner = container.querySelector('div[data-vc="toolbar-inner"]');
+  if (inner) return inner;
+
+  // Walk up a few ancestors to cover structures where toolbar is outside editor-content-container.
+  let p = container.parentElement;
+  for (let i = 0; i < 5 && p; i++) {
+    inner = p.querySelector('div[data-vc="toolbar-inner"]');
+    if (inner) return inner;
+    p = p.parentElement;
+  }
+
+  // Fallback: if there's only one toolbar on the page, use it.
+  const all = document.querySelectorAll('div[data-vc="toolbar-inner"]');
+  if (all.length === 1) return all[0];
+
+  return null;
+}
+
+// Ensure a toolbar toggle button exists and is scoped to this editor container
+function ensureToolbarToggle(container, panel) {
+  const toolbar = findToolbar(container);
+  if (!toolbar) return;
+
+  // Avoid duplicates (but keep it as the LAST child)
+  let btn = toolbar.querySelector('[data-cch-toggle="true"]');
+  if (btn) {
+    const host = btn.closest('[role="presentation"]') || btn;
+    if (toolbar.lastElementChild !== host) toolbar.appendChild(host);
+    btn.setAttribute("aria-pressed", String(!panel.hidden));
+    return;
+  }
+
+  // If toolbar hasn't populated yet, wait a tick so we append truly at the end.
+  const nativeButtons = toolbar.querySelectorAll("button, [role='button']");
+  if (nativeButtons.length === 0 && toolbar.childElementCount < 2) {
+    setTimeout(() => ensureToolbarToggle(container, panel), 50);
+    return;
+  }
+
+  // Clone native classes from a sibling button for look & feel
+  const templateBtn =
+    toolbar.querySelector(".css-8jb74d") ||
+    nativeButtons[nativeButtons.length - 1] ||
+    nativeButtons[0] ||
+    null;
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.setAttribute("data-cch-toggle", "true");
+  button.setAttribute("aria-label", "Toggle Conventional Comments panel");
+  button.setAttribute("title", "Toggle Conventional Comments panel");
+  button.setAttribute("aria-pressed", String(!panel.hidden));
+  button.textContent = "🏷️";
+  if (templateBtn && templateBtn.className) {
+    button.className = templateBtn.className;
+  }
+
+  button.addEventListener("click", () => {
+    setPanelVisible(panel, panel.hidden); // toggle
+    button.setAttribute("aria-pressed", String(!panel.hidden));
+  });
+
+  // Match Bitbucket's toolbar structure for spacing/alignment
+  const wrap2 = document.createElement("div");
+  wrap2.className = "css-ab8yd1";
+  wrap2.appendChild(button);
+
+  const wrap1 = document.createElement("div");
+  wrap1.setAttribute("role", "presentation");
+  wrap1.appendChild(wrap2);
+
+  toolbar.appendChild(wrap1);
 }
 
 // --- UI helpers ---
@@ -392,6 +520,22 @@ function applyPrefixSmart(editorEl, labelSelect, chips, ctx) {
   applyPrefixAtStart(editorEl, buildBoldLabel(effectiveLabel, effectiveDecs));
 }
 
+/** Track when UI-originated changes should not move the caret. */
+let _suppressCaretOnce = false;
+
+/** Only adjust caret when the ProseMirror editor really has focus/selection. */
+function editorHasFocus(editorEl) {
+  if (!editorEl) return false;
+  const ae = editorEl.ownerDocument.activeElement;
+  if (ae && editorEl.contains(ae)) return true;
+  const sel = editorEl.ownerDocument.getSelection();
+  if (sel && sel.rangeCount) {
+    const node = sel.getRangeAt(0).startContainer;
+    if (node && editorEl.contains(node)) return true;
+  }
+  return false;
+}
+
 // Apply/remove the prefix at the very beginning of the editor
 function applyPrefixAtStart(editorEl, parts) {
   if (!editorEl) return;
@@ -405,6 +549,7 @@ function applyPrefixAtStart(editorEl, parts) {
     firstBlock.firstChild.remove();
   }
 
+  const adjustCaret = editorHasFocus(editorEl) && !_suppressCaretOnce;
   const firstChild = firstBlock.firstChild;
   if (firstChild && firstChild.nodeName === "STRONG") {
     const strong = firstChild;
@@ -419,7 +564,7 @@ function applyPrefixAtStart(editorEl, parts) {
         after.nodeValue = after.nodeValue.replace(/^:\s?/, "");
       }
       strong.remove();
-      placeCaretAtStart(firstBlock);
+      if (adjustCaret) placeCaretAtStart(firstBlock);
       return;
     }
 
@@ -433,7 +578,7 @@ function applyPrefixAtStart(editorEl, parts) {
       strong.after(document.createTextNode(": "));
     }
 
-    moveCaretAfterPrefix(strong);
+    if (adjustCaret) moveCaretAfterPrefix(strong);
     return;
   }
 
@@ -468,9 +613,9 @@ function applyPrefixAtStart(editorEl, parts) {
       strong.nextSibling.nextSibling.remove();
     }
 
-    moveCaretAfterPrefix(strong);
+    if (adjustCaret) moveCaretAfterPrefix(strong);
   } else {
-    placeCaretAtStart(firstBlock);
+    if (adjustCaret) placeCaretAtStart(firstBlock);
   }
 }
 
