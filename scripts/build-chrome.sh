@@ -5,7 +5,7 @@
 # Define directories
 SRC_DIR="./src"
 DIST_DIR="./dist/chrome"
-PACKAGE_NAME="chrome-conventional-comments"
+PACKAGE_NAME="chrome-code-review-tags"
 
 # Clean up previous builds
 rm -rf "$DIST_DIR"

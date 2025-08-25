@@ -5,7 +5,7 @@
 # Define directories
 SRC_DIR="./src"
 DIST_DIR="./dist/firefox"
-PACKAGE_NAME="firefox-conventional-comments"
+PACKAGE_NAME="firefox-code-review-tags"
 
 # Clean up previous builds
 rm -rf "$DIST_DIR"

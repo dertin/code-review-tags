@@ -506,8 +506,8 @@ function ensureToolbarToggle(container, panel) {
   const button = document.createElement("button");
   button.type = "button";
   button.setAttribute("data-cch-toggle", "true");
-  button.setAttribute("aria-label", "Toggle Conventional Comments panel");
-  button.setAttribute("title", "Toggle Conventional Comments panel");
+  button.setAttribute("aria-label", "Toggle Code Review Tags panel");
+  button.setAttribute("title", "Toggle Code Review Tags panel");
   button.setAttribute("aria-pressed", String(!panel.hidden));
   button.textContent = "🏷️";
   if (templateBtn && templateBtn.className) {
