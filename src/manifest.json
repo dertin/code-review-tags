@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Conventional Comments Helper",
+  "name": "Conventional Comments Assistant",
   "version": "1.0.0",
   "description": "Make reviews clearer with Conventional Comments labels on bitbucket.org; GitHub and GitLab support coming soon.",
   "icons": { 
@@ -24,7 +24,8 @@
   "options_ui": { "page": "options.html", "open_in_tab": false },
   "browser_specific_settings": {
     "gecko": {
-      "strict_min_version": "109.0"
+      "strict_min_version": "109.0",
+      "id": "conventional-comments-assistant@hugint.com"
     }
   }
 }
