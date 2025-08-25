@@ -23,22 +23,44 @@ const DEFAULTS = {
     "polish",
     "quibble",
   ],
-  decorations: ["non-blocking", "blocking", "if-minor"],
+  decorations: ["non-blocking", "blocking", "if-minor", "security", "test"],
   defaultLabel: "suggestion",
   repliesStartVisible: false,
 };
 
 const api = globalThis.browser || globalThis.chrome;
 
+// --- helpers ---------------------------------------------------------------
+
+// Reserved token used by the UI to clear/close.
+const isReservedClearToken = (s) => String(s).trim().toLowerCase() === "x";
+
+/** Trim, dedupe, and remove the reserved "X" entry. */
+function sanitizeLabels(arr) {
+  const out = [];
+  const seen = new Set();
+  for (const raw of arr || []) {
+    const v = String(raw).trim();
+    if (!v || isReservedClearToken(v)) continue;
+    const key = v.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(v);
+  }
+  return out;
+}
+
+/** Populate the default label <select> with safe labels only. */
 function populateDefaultLabelDropdown(labels, selected) {
+  const safe = sanitizeLabels(labels);
   el.defaultLabel.innerHTML = "";
-  labels.forEach((label) => {
+  safe.forEach((label) => {
     const option = document.createElement("option");
     option.value = label;
     option.textContent = label;
     el.defaultLabel.appendChild(option);
   });
-  el.defaultLabel.value = selected || labels[0] || "";
+  el.defaultLabel.value = safe.includes(selected) ? selected : safe[0] || "";
 }
 
 async function restoreOptions() {
@@ -46,34 +68,59 @@ async function restoreOptions() {
     ? api.storage.sync.get(DEFAULTS)
     : Promise.resolve(DEFAULTS));
 
-  el.labels.value = (items.labels || DEFAULTS.labels).join(", ");
-  el.decorations.value = (items.decorations || DEFAULTS.decorations).join(", ");
+  const safeLabels = sanitizeLabels(items.labels || DEFAULTS.labels);
+  const safeDecorations = (items.decorations || DEFAULTS.decorations).map((s) =>
+    String(s).trim()
+  );
+
+  el.labels.value = safeLabels.join(", ");
+  el.decorations.value = safeDecorations.join(", ");
   populateDefaultLabelDropdown(
-    items.labels || DEFAULTS.labels,
+    safeLabels,
     items.defaultLabel || DEFAULTS.defaultLabel
   );
   el.repliesStartVisible.checked =
     typeof items.repliesStartVisible === "boolean"
       ? items.repliesStartVisible
       : DEFAULTS.repliesStartVisible;
+
+  // Soft notice if an old saved "X" was removed.
+  if ((items.labels || []).some(isReservedClearToken)) {
+    el.status.textContent = 'Note: removed reserved label "X".';
+    setTimeout(() => (el.status.textContent = ""), 2000);
+  }
 }
 
 async function saveOptions() {
-  const customLabels = el.labels.value
+  const customLabelsRaw = el.labels.value
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
+
   const customDecorations = el.decorations.value
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
 
+  const finalLabels = sanitizeLabels(
+    customLabelsRaw.length ? customLabelsRaw : DEFAULTS.labels
+  );
+
+  // Guard default against "X" or a value not present in the final list.
+  let defaultChoice = el.defaultLabel.value || DEFAULTS.defaultLabel;
+  if (isReservedClearToken(defaultChoice) || !finalLabels.includes(defaultChoice)) {
+    defaultChoice =
+      finalLabels.includes(DEFAULTS.defaultLabel)
+        ? DEFAULTS.defaultLabel
+        : finalLabels[0] || "";
+  }
+
   await api.storage.sync.set({
-    labels: customLabels.length ? customLabels : DEFAULTS.labels,
+    labels: finalLabels.length ? finalLabels : DEFAULTS.labels,
     decorations: customDecorations.length
       ? customDecorations
       : DEFAULTS.decorations,
-    defaultLabel: el.defaultLabel.value || DEFAULTS.defaultLabel,
+    defaultLabel: defaultChoice,
     repliesStartVisible: !!el.repliesStartVisible.checked,
   });
 

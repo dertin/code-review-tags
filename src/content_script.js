@@ -18,7 +18,7 @@ const DEFAULTS = {
     "polish",
     "quibble",
   ],
-  decorations: ["non-blocking", "blocking", "if-minor"],
+  decorations: ["non-blocking", "blocking", "if-minor", "security", "test"],
   defaultLabel: "suggestion",
   repliesStartVisible: false,
 };
@@ -41,12 +41,15 @@ const LABEL_DESCRIPTIONS = {
   typo: "Spelling/grammar correction.",
   polish: "Small refinement to improve quality/readability.",
   quibble: "Minor personal preference; subjective.",
+  X: "Clear the label and decorations, remove the prefix, and close the panel.",
 };
 
 const DECORATION_DESCRIPTIONS = {
   "non-blocking": "This does not need to be resolved before merging.",
   blocking: "Must be resolved before this can be merged.",
   "if-minor": "Only apply if the change is minor.",
+  security: "Highlights potential security risks.",
+  test: "Relates to testing, test coverage, or test quality.",
 };
 
 // --- Initialization ---
@@ -118,7 +121,7 @@ function injectIfNeeded() {
   document.querySelectorAll(EDITOR_CONTAINER_SELECTOR).forEach((container) => {
     const editorEl =
       container.querySelector(PROSE_SELECTOR) ||
-      container.closest('[data-testid="ak-editor-textarea"]') ||
+      container.querySelector('[data-testid="ak-editor-textarea"]') ||
       container;
 
     const reply = isReplyEditor(editorEl);
@@ -264,20 +267,28 @@ function isReplyEditor(editorEl) {
   return anyAbove;
 }
 
-// --- UI: compact panel with a label dropdown + decoration chips ---
+// --- UI: compact panel with a label control + decoration chips ---
 function buildUI(container, editorEl, startVisible) {
   const panel = document.createElement("div");
   panel.className = "cch-panel";
   panel.setAttribute("data-cch-panel", "true");
 
+  // Add "X" at the end to clear & close
   const labelSelect = createLabeledSelect(
-    ["", ...LABELS],
+    ["", ...LABELS, "X"],
     LABEL_DESCRIPTIONS,
     "Label"
   );
+  const sep = document.createElement("span");
+  sep.className = "cch-sep";
+  sep.setAttribute("aria-hidden", "true");
+  sep.title = "applies to";
+  sep.innerHTML = `<svg aria-hidden="true" width="10" height="10" viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;">
+    <path d="M2 0 L6 4 L2 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
   const chips = createDecorationChips(DECORATIONS, DECORATION_DESCRIPTIONS);
 
-  panel.append(labelSelect, chips);
+  panel.append(labelSelect, sep, chips);
   container.prepend(panel);
 
   // Detect existing prefix (edit mode) and capture baseline
@@ -288,28 +299,61 @@ function buildUI(container, editorEl, startVisible) {
   // Interaction flags
   let labelTouched = false;
   let chipsTouched = false;
+  let collapsed = false;
+
+  // Helper to toggle collapsed/expanded + visibility of chips
+  function updateVisibility() {
+    const has = !!labelSelect.value && labelSelect.value !== "X";
+    const useCollapsed = has && collapsed;
+    labelSelect.classList.toggle("collapsed", useCollapsed);
+    sep.style.display = useCollapsed ? "" : "none";
+    chips.style.display = useCollapsed ? "" : "none";
+  }
+
+  // Utility: clear prefix, reset UI, and close panel
+  function clearAndClose() {
+    labelSelect.value = "";
+    setChipsFromDecs(chips, []);
+    baseLabel = "";
+    baseDecs = [];
+    labelTouched = true;
+    chipsTouched = true;
+    collapsed = false;
+    updateVisibility();
+
+    _suppressCaretOnce = true;
+    applyPrefixAtStart(editorEl, { boldText: "", hasPrefix: false });
+    _suppressCaretOnce = false;
+
+    setPanelVisible(panel, false);
+    const toolbar = findToolbar(container);
+    const btn = toolbar?.querySelector?.('[data-cch-toggle="true"]');
+    if (btn) btn.setAttribute("aria-pressed", "false");
+  }
 
   // Initial state:
   if (existing.hasPrefix) {
-    // Edit mode: neutral UI so we don't overwrite on load
-    labelSelect.value = ""; // none
+    labelSelect.value = baseLabel || "";
+    setChipsFromDecs(chips, baseDecs);
+    collapsed = true;
   } else {
-    // New comment:
-    if (startVisible) {
-      // Only auto-apply defaults when the panel starts visible (root editor or setting enabled).
-      labelSelect.value = DEFAULT_LABEL || "";
-      applyPrefixFromUI(editorEl, labelSelect, chips);
-      baseLabel = labelSelect.value;
-      baseDecs = [];
-    } else {
-      // Panel starts hidden on replies: do not touch the editor content.
-      labelSelect.value = "";
-    }
+    // Start in "choose a label" mode (no default pre-applied)
+    labelSelect.value = "";
+    collapsed = false;
   }
+  updateVisibility();
 
   // Events
   labelSelect.addEventListener("change", () => {
+    // If user picked "X" from the expanded list -> clear & close
+    if (labelSelect.value === "X") {
+      clearAndClose();
+      return;
+    }
+
     labelTouched = true;
+    collapsed = true; // after choosing, collapse to show decorations
+    updateVisibility();
     _suppressCaretOnce = true;
     applyPrefixSmart(editorEl, labelSelect, chips, {
       baseLabel,
@@ -318,6 +362,56 @@ function buildUI(container, editorEl, startVisible) {
       chipsTouched,
     });
     _suppressCaretOnce = false;
+  });
+
+  // Click behavior:
+  // - If collapsed and user clicks the active label -> expand to choose labels.
+  // - If expanded and user clicks the SAME active label -> confirm selection and collapse to decorations.
+  // - If expanded and user clicks "X" -> clear & close.
+  labelSelect.addEventListener("click", (e) => {
+    const lab = e.target.closest(".cch-label");
+    if (!lab) return;
+    const input = lab.querySelector('input[type="radio"]');
+    if (!input) return;
+
+    const isCollapsed = labelSelect.classList.contains("collapsed");
+    const isActive = lab.classList.contains("active");
+
+    if (isCollapsed && isActive) {
+      // Expand to re-select a label
+      collapsed = false;
+      updateVisibility();
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+
+    if (!isCollapsed) {
+      if (input.value === "X") {
+        // Clear option from expanded list
+        e.preventDefault();
+        e.stopPropagation();
+        clearAndClose();
+        return;
+      }
+      if (isActive) {
+        // Confirm same label and go to decorations
+        labelTouched = true;
+        collapsed = true;
+        updateVisibility();
+        _suppressCaretOnce = true;
+        applyPrefixSmart(editorEl, labelSelect, chips, {
+          baseLabel,
+          baseDecs,
+          labelTouched,
+          chipsTouched,
+        });
+        _suppressCaretOnce = false;
+
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }
   });
 
   chips.querySelectorAll("input").forEach((cb) => {
@@ -366,28 +460,48 @@ function ensureToolbarToggle(container, panel) {
   const toolbar = findToolbar(container);
   if (!toolbar) return;
 
-  // Avoid duplicates (but keep it as the LAST child)
+  // Helper: keep our host visually last even if Bitbucket reorders nodes.
+  const forceLast = (host) => {
+    if (!host) return;
+
+    // Compute the current maximum `order` among direct children and set ours to max+1.
+    const maxOrder = Array.from(toolbar.children).reduce((max, el) => {
+      const v = parseInt(getComputedStyle(el).order, 10);
+      return Number.isFinite(v) ? Math.max(max, v) : max;
+      // Note: elements without an `order` compute to 0 in flex, so parseInt("0") is fine.
+    }, 0);
+    host.style.order = String(maxOrder + 1);
+
+    // Also append as the last DOM child to survive non-flex layouts or later mutations.
+    if (toolbar.lastElementChild !== host) toolbar.appendChild(host);
+
+    // Re-assert after potential layout churn/mutations triggered by the editor.
+    queueMicrotask(() => {
+      if (toolbar.lastElementChild !== host) toolbar.appendChild(host);
+    });
+    setTimeout(() => {
+      if (toolbar.lastElementChild !== host) toolbar.appendChild(host);
+    }, 250);
+  };
+
+  // Avoid duplicates (and keep it as the LAST element)
   let btn = toolbar.querySelector('[data-cch-toggle="true"]');
   if (btn) {
     const host = btn.closest('[role="presentation"]') || btn;
-    if (toolbar.lastElementChild !== host) toolbar.appendChild(host);
+    forceLast(host);
     btn.setAttribute("aria-pressed", String(!panel.hidden));
     return;
   }
 
-  // If toolbar hasn't populated yet, wait a tick so we append truly at the end.
+  // Wait until toolbar has at least one native button to mimic its structure/styles
   const nativeButtons = toolbar.querySelectorAll("button, [role='button']");
-  if (nativeButtons.length === 0 && toolbar.childElementCount < 2) {
+  if (nativeButtons.length === 0) {
     setTimeout(() => ensureToolbarToggle(container, panel), 50);
     return;
   }
 
-  // Clone native classes from a sibling button for look & feel
   const templateBtn =
-    toolbar.querySelector(".css-8jb74d") ||
-    nativeButtons[nativeButtons.length - 1] ||
-    nativeButtons[0] ||
-    null;
+    nativeButtons[nativeButtons.length - 1] || nativeButtons[0] || null;
 
   const button = document.createElement("button");
   button.type = "button";
@@ -397,6 +511,7 @@ function ensureToolbarToggle(container, panel) {
   button.setAttribute("aria-pressed", String(!panel.hidden));
   button.textContent = "🏷️";
   if (templateBtn && templateBtn.className) {
+    // copy look & feel without depending on specific class names in selectors
     button.className = templateBtn.className;
   }
 
@@ -405,46 +520,104 @@ function ensureToolbarToggle(container, panel) {
     button.setAttribute("aria-pressed", String(!panel.hidden));
   });
 
-  // Match Bitbucket's toolbar structure for spacing/alignment
-  const wrap2 = document.createElement("div");
-  wrap2.className = "css-ab8yd1";
-  wrap2.appendChild(button);
+  // Replicate Bitbucket's wrapper structure by cloning wrappers from a native button
+  let host = document.createElement("div");
+  host.setAttribute("role", "presentation");
+  let inner = document.createElement("div");
 
-  const wrap1 = document.createElement("div");
-  wrap1.setAttribute("role", "presentation");
-  wrap1.appendChild(wrap2);
+  if (templateBtn) {
+    const templateHost = templateBtn.closest('[role="presentation"]');
+    if (templateHost && templateHost.className) {
+      host.className = templateHost.className;
+    }
+    if (templateBtn.parentElement && templateBtn.parentElement !== templateHost) {
+      inner.className = templateBtn.parentElement.className || "";
+    }
+  }
 
-  toolbar.appendChild(wrap1);
+  inner.appendChild(button);
+  host.appendChild(inner);
+
+  // Insert at the end of the toolbar and keep it there
+  toolbar.appendChild(host);
+  forceLast(host);
 }
 
 // --- UI helpers ---
 function createLabeledSelect(options, descMap, aria) {
-  const s = document.createElement("select");
-  s.className = "cch-select";
-  s.setAttribute("aria-label", aria || "");
+  // Render as segmented radio "chips" but behave like a <select> for the rest of the code.
+  const wrap = document.createElement("div");
+  wrap.className = "cch-labels";
+  wrap.setAttribute("role", "radiogroup");
+  if (aria) wrap.setAttribute("aria-label", aria);
+
+  const name = `cch-labels-${Math.random().toString(36).slice(2)}`;
+  let _value = "";
+
+  function syncActive() {
+    wrap.querySelectorAll(".cch-label").forEach((el) => {
+      const radio = el.querySelector("input[type=radio]");
+      el.classList.toggle("active", !!radio?.checked);
+    });
+  }
+
   options.forEach((v) => {
-    const opt = document.createElement("option");
-    opt.value = v;
-    opt.textContent = v === "" ? "---" : v;
-    opt.title = descMap?.[v] || "";
-    s.appendChild(opt);
+    // Skip rendering a chip for the blank placeholder, but keep it as a possible value.
+    if (v === "") return;
+    const id = `${name}-${v}`;
+    const label = document.createElement("label");
+    label.className = "cch-label";
+    label.setAttribute("for", id);
+    label.title = descMap?.[v] || "";
+
+    const radio = document.createElement("input");
+    radio.type = "radio";
+    radio.name = name;
+    radio.id = id;
+    radio.value = v;
+
+    const txt = document.createElement("span");
+    txt.textContent = v;
+
+    radio.addEventListener("change", () => {
+      if (radio.checked) {
+        _value = v;
+        syncActive();
+        wrap.dispatchEvent(new Event("change", { bubbles: false }));
+      }
+    });
+
+    label.append(radio, txt);
+    wrap.appendChild(label);
   });
-  return s;
+
+  // Emulate <select> API: value getter/setter
+  Object.defineProperty(wrap, "value", {
+    get() {
+      return _value;
+    },
+    set(v) {
+      _value = v || "";
+      const radios = wrap.querySelectorAll(`input[name="${name}"]`);
+      radios.forEach((r) => (r.checked = r.value === _value));
+      syncActive();
+    },
+  });
+
+  return wrap;
 }
 
 function createDecorationChips(decorations, descMap) {
   const wrap = document.createElement("div");
   wrap.className = "cch-chips";
+
   decorations.forEach((dec) => {
-    const id = `cch-dec-${dec}`;
     const chip = document.createElement("label");
     chip.className = "cch-chip";
-    chip.setAttribute("for", id);
     chip.title = descMap?.[dec] || "";
 
     const cb = document.createElement("input");
     cb.type = "checkbox";
-    cb.id = id;
     cb.value = dec;
 
     const txt = document.createElement("span");
@@ -453,7 +626,16 @@ function createDecorationChips(decorations, descMap) {
     chip.append(cb, txt);
     wrap.appendChild(chip);
   });
+
   return wrap;
+}
+
+function setChipsFromDecs(container, decs) {
+  const set = new Set(decs || []);
+  container.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+    cb.checked = set.has(cb.value);
+    cb.closest(".cch-chip")?.classList.toggle("active", cb.checked);
+  });
 }
 
 // --- Prefix read/parse helpers ---

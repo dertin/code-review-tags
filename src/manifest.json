@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Bitbucket Conventional Comments",
+  "name": "Conventional Comments Helper",
   "version": "1.0.0",
-  "description": "Build and maintain Conventional Comments prefixes directly in Bitbucket PR editors.",
+  "description": "Make reviews clearer with Conventional Comments labels on bitbucket.org; GitHub and GitLab support coming soon.",
   "icons": { 
     "48": "icons/icon-48.png", 
     "96": "icons/icon-96.png" 
