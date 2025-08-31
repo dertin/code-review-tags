@@ -108,11 +108,13 @@ async function saveOptions() {
 
   // Guard default against "X" or a value not present in the final list.
   let defaultChoice = el.defaultLabel.value || DEFAULTS.defaultLabel;
-  if (isReservedClearToken(defaultChoice) || !finalLabels.includes(defaultChoice)) {
-    defaultChoice =
-      finalLabels.includes(DEFAULTS.defaultLabel)
-        ? DEFAULTS.defaultLabel
-        : finalLabels[0] || "";
+  if (
+    isReservedClearToken(defaultChoice) ||
+    !finalLabels.includes(defaultChoice)
+  ) {
+    defaultChoice = finalLabels.includes(DEFAULTS.defaultLabel)
+      ? DEFAULTS.defaultLabel
+      : finalLabels[0] || "";
   }
 
   await api.storage.sync.set({

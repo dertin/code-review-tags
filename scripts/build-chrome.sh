@@ -11,14 +11,10 @@ PACKAGE_NAME="chrome-code-review-tags"
 rm -rf "$DIST_DIR"
 mkdir -p "$DIST_DIR"
 
-# Copy source files from the src directory
-cp "$SRC_DIR"/*.js "$SRC_DIR"/*.html "$SRC_DIR"/*.css "$DIST_DIR/"
-cp -r "$SRC_DIR/icons" "$DIST_DIR/"
-
-# Copy the manifest
-cp "$SRC_DIR/manifest.json" "$DIST_DIR/manifest.json"
+# Copy all source files (including nested content scripts)
+cp -r "$SRC_DIR"/* "$DIST_DIR/"
 
 # Create the ZIP file
-(cd "$DIST_DIR" && zip -r "../../dist/$PACKAGE_NAME.zip" .)
+(cd "$DIST_DIR" && rm -f "../../dist/$PACKAGE_NAME.zip" && zip -r -FS "../../dist/$PACKAGE_NAME.zip" .)
 
 echo "Package for Chrome created at: dist/$PACKAGE_NAME.zip"

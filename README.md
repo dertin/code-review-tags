@@ -19,7 +19,7 @@ Lightweight code review extension that adds tags and decorations in the style of
 ## Compatibility
 
 - Bitbucket Cloud: `https://bitbucket.org/*/pull-requests/*`
-- Engines: Manifest V3. Tested on Chrome/Edge and Firefox (>= 109) as a temporary extension.
+- Browsers: Chrome, Edge, Firefox.
 - GitHub and GitLab: on the roadmap (see TODO).
 
 ## Installation (local / temporary)
@@ -62,10 +62,12 @@ The extension is written in vanilla JavaScript as a WebExtension (Manifest V3). 
 
 - Main structure:
   - `src/manifest.json`: permissions, matches, and pages.
-  - `src/content_script.js`: injects the panel and manages the comment prefix in the editor.
+  - `src/content/core.js`: common UI + prefix logic.
+  - `src/content/platforms/bitbucket.js`: Bitbucket selectors and toolbar handling.
+  - `src/content/main.js`: main content script orchestrating core + platform.
   - `src/style.css`: panel styles (light/dark modes).
-  - `src/options.html` and `src/options.js`: options page.
-  - `src/popup.html`: popup with quick links.
+  - `src/ui/options/index.html` and `src/ui/options/index.js`: options page.
+  - `src/ui/popup/index.html`: popup with quick links.
 
 ### How it works (key points)
 
@@ -86,9 +88,16 @@ PRs are welcome! If you want to help:
 ### Adding support for another platform (hints)
 
 - Add the domain to `content_scripts.matches` in `manifest.json`.
-- Implement editor detection selectors and heuristics similar to Bitbucket's in `content_script.js` (look for `EDITOR_CONTAINER_SELECTOR`, `PROSE_SELECTOR`, and toolbar handling).
-- Ensure the toggle button visually integrates into the target platform's toolbar (clone classes/structure as needed).
-- Verify the prefix in either rich HTML or plain text depending on the target editor.
+- Create a new `src/content/platforms/<name>.js` implementing:
+  - `editorContainerSelector`, `toolbarSelector` (used by the observer for scheduling)
+  - `getEditorEl(container)`, `isReplyEditor(editorEl)`
+  - `ensureToolbarToggle(container, panel)`
+  - Optional:
+    - `findToolbar(container)`
+    - `syncToolbarButton(container, visible)` (the orchestrator checks for existence before calling)
+- Register it under `globalThis.CodeReviewTags.platforms.<name>` and include the file in `manifest.json` before `src/content/main.js`.
+- Ensure the toggle button visually integrates into the platform toolbar (clone classes/structure if needed).
+- Note: The current core integration targets rich contenteditable editors (e.g., ProseMirror/TipTap). If the target platform uses plain `<textarea>`, you'll likely need to add editor hooks (read/apply prefix + caret handling) to `core.js` or a small adapter layer to handle text content safely.
 
 ## TODO
 

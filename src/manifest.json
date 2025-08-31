@@ -1,27 +1,31 @@
 {
   "manifest_version": 3,
   "name": "Code Review Tags",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Add Conventional Comments style labels and decorations to your pull-request comments (see conventionalcomments.org). Cleaner feedback, faster reviews. Works on Bitbucket.org. GitHub/GitLab support planned. Not affiliated with Atlassian or Bitbucket.",
-  "icons": { 
-    "48": "icons/icon-48.png", 
-    "96": "icons/icon-96.png" 
+  "icons": {
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png"
   },
   "permissions": ["storage"],
   "action": {
     "default_icon": "icons/icon-48.png",
     "default_title": "Code Review Tags",
-    "default_popup": "popup.html"
+    "default_popup": "ui/popup/index.html"
   },
   "content_scripts": [
     {
       "matches": ["*://bitbucket.org/*/pull-requests/*"],
-      "js": ["content_script.js"],
+      "js": [
+        "content/core.js",
+        "content/platforms/bitbucket.js",
+        "content/main.js"
+      ],
       "css": ["style.css"],
       "run_at": "document_idle"
     }
   ],
-  "options_ui": { "page": "options.html", "open_in_tab": false },
+  "options_ui": { "page": "ui/options/index.html", "open_in_tab": false },
   "browser_specific_settings": {
     "gecko": {
       "strict_min_version": "109.0",

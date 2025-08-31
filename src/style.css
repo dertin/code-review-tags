@@ -1,132 +1,132 @@
 /* ---------- Color tokens (light default) ---------- */
 :root {
-  --cch-surface: #ffffff;
-  --cch-border:  #DFE1E6;
-  --cch-text:    #172B4D;
-  --cch-muted:   #6B778C;
+  --crt-surface: #ffffff;
+  --crt-border:  #DFE1E6;
+  --crt-text:    #172B4D;
+  --crt-muted:   #6B778C;
 
-  --cch-select-bg:    #FAFBFC;
-  --cch-select-bord:  #DFE1E6;
+  --crt-select-bg:    #FAFBFC;
+  --crt-select-bord:  #DFE1E6;
 
-  --cch-chip-bg:      #F4F5F7;
-  --cch-chip-bord:    #C1C7D0;
-  --cch-chip-text:    #172B4D;
+  --crt-chip-bg:      #F4F5F7;
+  --crt-chip-bord:    #C1C7D0;
+  --crt-chip-text:    #172B4D;
 
-  --cch-chip-active-bg:   #0052CC;  /* Atlassian blue */
-  --cch-chip-active-bord: #0052CC;
-  --cch-chip-active-text: #ffffff;
+  --crt-chip-active-bg:   #0052CC;
+  --crt-chip-active-bord: #0052CC;
+  --crt-chip-active-text: #ffffff;
 
-  --cch-shadow: 0 6px 18px rgba(9,30,66,0.08);
-  --cch-focus:  0 0 0 2px rgba(29,122,252,.4); /* blue focus ring */
+  --crt-shadow: 0 6px 18px rgba(9,30,66,0.08);
+  --crt-focus:  0 0 0 2px rgba(29,122,252,.4); /* blue focus ring */
 }
 
 /* ---------- Dark mode via Bitbucket attribute ---------- */
 html[data-color-mode="dark"] {
-  --cch-surface: #1D2125;   /* Atlassian dark surface */
-  --cch-border:  #2C333A;
-  --cch-text:    #B6C2CF;
-  --cch-muted:   #9FADBC;
+  --crt-surface: #1D2125;
+  --crt-border:  #2C333A;
+  --crt-text:    #B6C2CF;
+  --crt-muted:   #9FADBC;
 
-  --cch-select-bg:    #22272B;
-  --cch-select-bord:  #3D4751;
+  --crt-select-bg:    #22272B;
+  --crt-select-bord:  #3D4751;
 
-  --cch-chip-bg:      #2C333A;
-  --cch-chip-bord:    #3D4751;
-  --cch-chip-text:    #B6C2CF;
+  --crt-chip-bg:      #2C333A;
+  --crt-chip-bord:    #3D4751;
+  --crt-chip-text:    #B6C2CF;
 
-  --cch-chip-active-bg:   #0052CC;
-  --cch-chip-active-bord: #0052CC;
-  --cch-chip-active-text: #ffffff;
+  --crt-chip-active-bg:   #0052CC;
+  --crt-chip-active-bord: #0052CC;
+  --crt-chip-active-text: #ffffff;
 
-  --cch-shadow: 0 6px 18px rgba(0,0,0,0.45);
-  --cch-focus:  0 0 0 2px rgba(29,122,252,.55);
+  --crt-shadow: 0 6px 18px rgba(0,0,0,0.45);
+  --crt-focus:  0 0 0 2px rgba(29,122,252,.55);
 }
 
 /* ---------- Optional fallback for environments w/o the attribute ---------- */
 @media (prefers-color-scheme: dark) {
   :root:not(html[data-color-mode]) {
-    --cch-surface: #1D2125;
-    --cch-border:  #2C333A;
-    --cch-text:    #B6C2CF;
-    --cch-muted:   #9FADBC;
+    --crt-surface: #1D2125;
+    --crt-border:  #2C333A;
+    --crt-text:    #B6C2CF;
+    --crt-muted:   #9FADBC;
 
-    --cch-select-bg:    #22272B;
-    --cch-select-bord:  #3D4751;
+    --crt-select-bg:    #22272B;
+    --crt-select-bord:  #3D4751;
 
-    --cch-chip-bg:      #2C333A;
-    --cch-chip-bord:    #3D4751;
-    --cch-chip-text:    #B6C2CF;
+    --crt-chip-bg:      #2C333A;
+    --crt-chip-bord:    #3D4751;
+    --crt-chip-text:    #B6C2CF;
 
-    --cch-chip-active-bg:   #0052CC;
-    --cch-chip-active-bord: #0052CC;
-    --cch-chip-active-text: #ffffff;
+    --crt-chip-active-bg:   #0052CC;
+    --crt-chip-active-bord: #0052CC;
+    --crt-chip-active-text: #ffffff;
 
-    --cch-shadow: 0 6px 18px rgba(0,0,0,0.45);
-    --cch-focus:  0 0 0 2px rgba(29,122,252,.55);
+    --crt-shadow: 0 6px 18px rgba(0,0,0,0.45);
+    --crt-focus:  0 0 0 2px rgba(29,122,252,.55);
   }
 }
 
 /* ---------- Panel ---------- */
-.cch-panel{
+.crt-panel{
   font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   display: grid;
   grid-template-columns: auto auto 1fr;
   gap: 12px;
   align-items: center;
-  background: var(--cch-surface);
-  color: var(--cch-text);
-  border: 1px solid var(--cch-border);
+  background: var(--crt-surface);
+  color: var(--crt-text);
+  border: 1px solid var(--crt-border);
   padding: 12px;
-  box-shadow: var(--cch-shadow);
+  box-shadow: var(--crt-shadow);
   margin: -20px -20px 0px;
 }
 
 /* small arrow/chevron between label and decorations */
-.cch-sep{
-  color: var(--cch-muted);
+.crt-sep{
+  color: var(--crt-muted);
   font-size: 18px;
   line-height: 1;
   padding: 0 2px;
   user-select: none;
 }
 
-.cch-sep svg{
+.crt-sep svg{
   width: 10px;
   height: 10px;
   vertical-align: middle;
-  color: var(--cch-muted);
+  color: var(--crt-muted);
 }
 
 /* ---------- Select (legacy fallback if ever shown) ---------- */
-.cch-select{
+.crt-select{
   width: 100%;
-  border: 1px solid var(--cch-select-bord);
-  background: var(--cch-select-bg);
-  color: var(--cch-text);
+  border: 1px solid var(--crt-select-bord);
+  background: var(--crt-select-bg);
+  color: var(--crt-text);
   border-radius: 10px;
   padding: 8px 10px;
   font-size: 13px;
   outline: none;
 }
-.cch-select:focus-visible { box-shadow: var(--cch-focus); }
+.crt-select:focus-visible { box-shadow: var(--crt-focus); }
 
 /* ---------- Labels (segmented control) ---------- */
-.cch-labels{
+.crt-labels{
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
 }
-.cch-labels.collapsed .cch-label:not(.active){
+.crt-labels.collapsed .crt-label:not(.active){
   display: none;
 }
-.cch-label{
+.crt-label{
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: var(--cch-chip-bg);
-  border: 1px solid var(--cch-chip-bord);
-  color: var(--cch-chip-text);
+  background: var(--crt-chip-bg);
+  border: 1px solid var(--crt-chip-bord);
+  color: var(--crt-chip-text);
   padding: 4px 10px;          /* thinner */
   border-radius: 10px;
   cursor: pointer;
@@ -135,37 +135,37 @@ html[data-color-mode="dark"] {
   transition: background .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
   position: relative;
 }
-.cch-label input{
+.crt-label input{
   position: absolute;
   opacity: 0;
   pointer-events: none;
   width: 0;
   height: 0;
 }
-.cch-label:hover { filter: brightness(1.05); }
-.cch-label.active{
-  background: var(--cch-chip-active-bg);
-  border-color: var(--cch-chip-active-bord);
-  color: var(--cch-chip-active-text);
+.crt-label:hover { filter: brightness(1.05); }
+.crt-label.active{
+  background: var(--crt-chip-active-bg);
+  border-color: var(--crt-chip-active-bord);
+  color: var(--crt-chip-active-text);
 }
-.cch-label input:focus-visible ~ span{
-  box-shadow: var(--cch-focus);
+.crt-label input:focus-visible ~ span{
+  box-shadow: var(--crt-focus);
   border-radius: 10px;
 }
 
 /* ---------- Chips (decorations) ---------- */
-.cch-chips{
+.crt-chips{
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
-.cch-chip{
+.crt-chip{
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: var(--cch-chip-bg);
-  border: 1px solid var(--cch-chip-bord);
-  color: var(--cch-chip-text);
+  background: var(--crt-chip-bg);
+  border: 1px solid var(--crt-chip-bord);
+  color: var(--crt-chip-text);
   padding: 4px 10px;          /* thinner */
   border-radius: 10px;
   cursor: pointer;
@@ -174,25 +174,25 @@ html[data-color-mode="dark"] {
   transition: background .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
   position: relative;
 }
-.cch-chip input{
+.crt-chip input{
   position: absolute;
   opacity: 0;
   pointer-events: none;
   width: 0;
   height: 0;
 }
-.cch-chip:hover { filter: brightness(1.05); }
-.cch-chip.active{
-  background: var(--cch-chip-active-bg);
-  border-color: var(--cch-chip-active-bord);
-  color: var(--cch-chip-active-text);
+.crt-chip:hover { filter: brightness(1.05); }
+.crt-chip.active{
+  background: var(--crt-chip-active-bg);
+  border-color: var(--crt-chip-active-bord);
+  color: var(--crt-chip-active-text);
 }
-.cch-chip input:focus-visible ~ span{
-  box-shadow: var(--cch-focus);
+.crt-chip input:focus-visible ~ span{
+  box-shadow: var(--crt-focus);
 }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 900px){
-  .cch-panel{ grid-template-columns: 1fr; }
-  .cch-sep{ display: none; }
+  .crt-panel{ grid-template-columns: 1fr; }
+  .crt-sep{ display: none; }
 }
