@@ -8,6 +8,12 @@ Lightweight code review extension that adds tags and decorations in the style of
 - Button in the editor toolbar to show/hide the built‑in panel.
 - Works today on Bitbucket.org (Pull Requests). GitHub and GitLab support is planned.
 
+## Install
+
+[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-Install-4285F4?logo=google-chrome&logoColor=white)](https://chromewebstore.google.com/detail/code-review-tags/eiddfkfgoicohaanchfoelgoidblbdge)
+[![Firefox Add-ons](https://img.shields.io/badge/Firefox%20Add--ons-Install-FF7139?logo=firefoxbrowser&logoColor=white)](https://addons.mozilla.org/es-ES/firefox/addon/code-review-tags/)
+[![Edge Add-ons](https://img.shields.io/badge/Edge%20Add--ons-Install-0C59A4?logo=microsoft-edge&logoColor=white)](https://microsoftedge.microsoft.com/addons/detail/code-review-tags/gekciboeahhjcepkebohnkodoempidfo)
+
 ---
 
 ## Compatibility
