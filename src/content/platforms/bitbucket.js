@@ -56,6 +56,12 @@
     return false;
   }
 
+  // Check if the editor is inside Bitbucket's conversation assistant chat
+  function isInAssistantChat(editorEl) {
+    if (!editorEl || !editorEl.closest) return false;
+    return !!editorEl.closest('[data-testid="bitbucket-conversation-assistant"]');
+  }
+
   // Decide if the editor is a reply composer (vs. the root/first comment editor).
   // Rules: editor inside non-first comment OR reply button above OR thread-level composer with comments above.
   function isReplyEditor(editorEl) {
@@ -198,6 +204,7 @@
     toolbarSelector: TOOLBAR_SELECTOR,
     getEditorEl,
     isReplyEditor,
+    isInAssistantChat,
     ensureToolbarToggle,
     findToolbar,
     syncToolbarButton,

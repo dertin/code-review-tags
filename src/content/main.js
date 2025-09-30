@@ -103,6 +103,16 @@ function injectIfNeeded(platform) {
     .forEach((container) => {
       const editorEl = platform.getEditorEl(container);
 
+      // Skip injection if editor is inside Bitbucket's conversation assistant chat
+      if (platform.isInAssistantChat && platform.isInAssistantChat(editorEl)) {
+        if (DEBUG)
+          console.debug("[crt] injectIfNeeded -> skipping assistant chat", {
+            container,
+            editorEl,
+          });
+        return;
+      }
+
       const reply = platform.isReplyEditor(editorEl);
       const startVisible = reply ? REPLIES_START_VISIBLE : true;
 

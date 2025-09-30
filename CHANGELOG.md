@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.1] - 2025-09-30
+
+### Fixed
+- [Bitbucket] Prevent panel from appearing in Rovo Chat by detecting `[data-testid="bitbucket-conversation-assistant"]` and skipping injection.
+
 ## [1.1.0] - 2025-08-31
 
 ### Refactor
